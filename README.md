@@ -157,33 +157,7 @@ You can also **explicitly request a specific agent** using natural language or t
 
 When you ask the Codebase Archeologist to visualize system architecture, you'll get clean, informative diagrams like this:
 
-```
-┌─────────────────────────────────────────────┐
-│         Presentation Layer                  │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │   Web    │  │  Mobile  │  │   API    │ │
-│  │   App    │  │   App    │  │ Gateway  │ │
-│  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────┬───────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────┐
-│         Business Logic Layer                │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │   Auth   │  │  Orders  │  │ Payments │ │
-│  │ Service  │  │ Service  │  │ Service  │ │
-│  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────┬───────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────┐
-│         Data Access Layer                   │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │   User   │  │  Order   │  │ Payment  │ │
-│  │   DB     │  │   DB     │  │   DB     │ │
-│  └──────────┘  └──────────┘  └──────────┘ │
-└─────────────────────────────────────────────┘
-```
-
-### Dependency Graph (Mermaid)
+####  Dependency Graph (Mermaid)
 
 ```mermaid
 graph TD
