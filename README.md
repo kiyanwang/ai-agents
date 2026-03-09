@@ -2,9 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-1-green.svg)](agents/)
+[![Skills](https://img.shields.io/badge/skills-3-orange.svg)](skills/)
 [![Claude Code](https://img.shields.io/badge/claude_code-compatible-purple.svg)](https://code.claude.com)
 
-> A curated collection of specialized AI agents designed to supercharge your development workflow with Claude Code.
+> A curated collection of specialized AI agents and skills designed to supercharge your development workflow with Claude Code.
 
 ## 🌟 Why This Exists
 
@@ -40,6 +41,70 @@ The Codebase Archeologist approaches codebases like an archeologist explores anc
 - "Create an architecture overview for onboarding new team members"
 - "Explain the purpose of the helpers/ directory in the users module"
 
+## 🛠️ Available Skills
+
+Skills are slash commands that you invoke directly with `/skill-name`. Unlike agents (which Claude selects automatically), skills are explicit actions you trigger when needed.
+
+| Skill | Description | Invocation |
+|-------|-------------|------------|
+| [Smart Commit](skills/smart-commit.md) | Analyse changes and create a conventional commit following the Conventional Commits spec | `/smart-commit [ticket-id] [--no-body] [--split]` |
+| [SonarQube Fix](skills/sonarqube-fix.md) | Detect SonarQube bot comments on a PR, fetch issue details from SonarCloud API, and fix or triage each finding | `/sonarqube-fix <pr-url>` |
+| [Sentry Fix](skills/sentry-fix.md) | Extract Sentry bot findings on a PR, verify each issue, and fix valid bugs or explain false positives | `/sentry-fix <pr-url>` |
+
+### Smart Commit
+
+Analyses your staged (or unstaged) changes and produces a well-formed conventional commit. It reads recent git history to match your project's commit style, warns about suspicious content (secrets, debug logs), and asks for clarification when changes span unrelated concerns.
+
+**Features:**
+- **Conventional Commits**: Automatically formats as `<type>[(scope)]: <description>`
+- **Ticket Linking**: Pass a ticket ID to include it in the commit message
+- **Split Mode**: Use `--split` to create separate commits for unrelated changes
+- **Safety Checks**: Warns about leaked secrets or debug logs before committing
+
+**Example Use Cases:**
+```
+/smart-commit
+/smart-commit PROJ-1234
+/smart-commit --no-body
+/smart-commit PROJ-1234 --split
+```
+
+### SonarQube Fix
+
+Bridges the gap between SonarQube bot comments (which only show summary counts) and the actual issues. This skill fetches full issue details from the SonarCloud API, presents a prioritised summary, and works through each finding — fixing valid issues and explaining false positives.
+
+**Features:**
+- **API Integration**: Fetches issues, security hotspots, and rule descriptions from SonarCloud
+- **Priority Processing**: Works through findings from BLOCKER/CRITICAL down to INFO
+- **Structured Triage**: Observe → Assess → Act workflow for each finding
+- **Batch Processing**: Groups findings by file to minimise redundant reads
+
+**Prerequisites:** Requires `SONAR_TOKEN` environment variable ([generate one here](https://sonarcloud.io/account/security))
+
+**Example Use Cases:**
+```
+/sonarqube-fix https://github.com/org/repo/pull/123
+/sonarqube-fix org/repo#123
+/sonarqube-fix #123
+```
+
+### Sentry Fix
+
+Extracts and resolves Sentry bot findings on a GitHub pull request. Reads each Sentry review comment, extracts the "Prompt for AI Agent" block, verifies whether the issue is real, and either implements the fix or explains why it's a false positive.
+
+**Features:**
+- **Automatic Extraction**: Parses severity, bug summary, suggested fix, and AI agent prompt from Sentry comments
+- **Severity-First Processing**: Works through HIGH severity findings first
+- **Observe → Conclude → Act**: Structured verification before any code changes
+- **Minimal Changes**: Targeted fixes that follow existing code style
+
+**Example Use Cases:**
+```
+/sentry-fix https://github.com/org/repo/pull/123
+/sentry-fix org/repo#123
+/sentry-fix #123
+```
+
 ## 🚀 Installation
 
 ### Prerequisites
@@ -53,32 +118,35 @@ You can install these agents either for a specific project or globally for all y
 
 #### Option 1: Project-Specific Installation (Recommended for Teams)
 
-Install agents in your project directory so they're available to all team members:
+Install agents and skills in your project directory so they're available to all team members:
 
 ```bash
 # Navigate to your project directory
 cd your-project
 
-# Create the agents directory
+# Copy agents
 mkdir -p .claude/agents
-
-# Copy the agents you want to use
 cp path/to/ai-agents/agents/*.md .claude/agents/
+
+# Copy skills (slash commands)
+mkdir -p .claude/commands
+cp path/to/ai-agents/skills/*.md .claude/commands/
 ```
 
 **Benefits:**
-- Agents are version-controlled with your project
-- Team members automatically get the same agents
-- Different projects can use different agent versions
+- Agents and skills are version-controlled with your project
+- Team members automatically get the same setup
+- Different projects can use different versions
 
 #### Option 2: Global Installation (Personal Use)
 
-Install agents globally to use them across all your projects:
+Install agents and skills globally to use them across all your projects:
 
 ```bash
 # From this repository directory
-mkdir -p ~/.claude/agents
+mkdir -p ~/.claude/agents ~/.claude/commands
 cp agents/*.md ~/.claude/agents/
+cp skills/*.md ~/.claude/commands/
 ```
 
 **Benefits:**
@@ -88,68 +156,69 @@ cp agents/*.md ~/.claude/agents/
 
 ### Verification
 
-After installation, verify your agents are available:
+After installation, verify everything is available:
 
 ```bash
-# Check project-specific agents
+# Check project-specific installation
 ls .claude/agents/
+ls .claude/commands/
 
-# Or check global agents
+# Or check global installation
 ls ~/.claude/agents/
+ls ~/.claude/commands/
 ```
 
-In Claude Code, you can also use the `/agents` command to see all available agents.
+In Claude Code, you can also use the `/agents` command to see all available agents. Skills will appear as slash commands (e.g. `/smart-commit`).
 
 ## 💡 Usage
 
-Claude Code agents work in two complementary ways, giving you flexibility in how you interact with them.
+This collection includes two types of tools: **agents** (autonomous specialists) and **skills** (slash commands). They work differently but complement each other.
 
-### Automatic Invocation (Smart Detection)
+### Agents — Automatic & Explicit Invocation
 
-Claude will **automatically detect and use the appropriate agent** based on your request. The agents' descriptions are designed to trigger on relevant keywords and contexts.
+Agents are **automatically detected and invoked** based on your request. Their descriptions contain trigger conditions so Claude knows when each specialist is needed.
 
-**Examples:**
-
+**Automatic (Smart Detection):**
 ```
 You: "Can you help me understand the architecture of this codebase?"
 → Claude automatically invokes the Codebase Archeologist
 
 You: "I need to see what modules depend on the payment service"
 → Claude automatically invokes the Codebase Archeologist
-
-You: "Create documentation explaining our system design"
-→ Claude automatically invokes the Codebase Archeologist
 ```
 
-The agent descriptions contain specific trigger conditions and examples, so Claude knows when each specialist is needed. Just describe your goal naturally, and Claude will choose the right expert for the job.
-
-### Explicit Invocation (Direct Request)
-
-You can also **explicitly request a specific agent** using natural language or the `@` mention syntax:
-
-**Natural Language:**
+**Explicit (Direct Request):**
 ```
 "Use the codebase-archeologist agent to analyze the authentication flow"
-"Have the codebase archeologist create a dependency graph"
-```
-
-**@ Mention Syntax:**
-```
-"@codebase-archeologist analyze the cart module and show me its dependencies"
 "@codebase-archeologist create a museum tour document for the API layer"
 ```
 
-**When to use explicit invocation:**
-- You know exactly which specialist you need
-- You want to ensure a specific agent is used
-- You're comparing outputs from different agents
+### Skills — Slash Commands
+
+Skills are **invoked explicitly** using slash commands. Type the command and Claude executes the skill's workflow.
+
+```
+/smart-commit                    → Analyse changes and create a conventional commit
+/smart-commit PROJ-1234 --split  → Commit with ticket ID, splitting unrelated changes
+/sonarqube-fix #123              → Fix SonarQube issues on PR #123
+/sentry-fix org/repo#456         → Fix Sentry findings on a PR
+```
+
+### Agents vs Skills
+
+| | Agents | Skills |
+|---|---|---|
+| **Invocation** | Automatic or explicit | Slash command only |
+| **Install to** | `.claude/agents/` | `.claude/commands/` |
+| **Best for** | Open-ended exploration and analysis | Repeatable, structured workflows |
+| **Arguments** | Described in natural language | Passed after the command |
 
 ### Best Practices
 
-- **Start with automatic**: Let Claude choose the agent for most tasks
+- **Start with automatic**: Let Claude choose the agent for exploratory tasks
+- **Use skills for workflows**: Structured, repeatable tasks like committing or PR triage
 - **Be specific**: Detailed requests get better results
-- **Iterate**: Agents can refine their analysis based on your feedback
-- **Combine agents**: Use multiple specialists for complex workflows
+- **Iterate**: Both agents and skills can refine based on your feedback
 
 ## 🎨 Example Outputs
 
@@ -191,10 +260,10 @@ I'd love for this collection to grow with contributions from the community! Whet
 
 ### Ways to Contribute
 
-- **Share your own agents**: Created a specialized agent? Submit it!
-- **Improve existing agents**: Better descriptions, additional capabilities, bug fixes
+- **Share your own agents or skills**: Created a specialized agent or useful slash command? Submit it!
+- **Improve existing ones**: Better descriptions, additional capabilities, bug fixes
 - **Report issues**: Found a problem? Let me know in the [Issues](../../issues)
-- **Suggest new agents**: Ideas for useful specialists
+- **Suggest ideas**: New agents, skills, or improvements
 - **Improve documentation**: Typos, clarity, examples
 
 ### Submitting an Agent
@@ -207,12 +276,23 @@ I'd love for this collection to grow with contributions from the community! Whet
 6. Add your agent to the table in this README
 7. Submit a pull request!
 
-### Agent Development Tips
+### Submitting a Skill
 
-- **Single Responsibility**: Each agent should have one clear focus
-- **Trigger Conditions**: Include specific examples in the description to help Claude know when to use it
-- **Quality Over Quantity**: One excellent agent beats several mediocre ones
-- **Test Thoroughly**: Try your agent on real problems before submitting
+1. Fork this repository
+2. Create your skill file in the `skills/` directory
+3. Follow the naming convention: `lowercase-with-hyphens.md`
+4. Include proper YAML frontmatter (name, description, and optionally allowed_tools, argument-hint, version)
+5. Write a clear workflow with structured steps
+6. Add your skill to the table in this README
+7. Submit a pull request!
+
+### Development Tips
+
+- **Single Responsibility**: Each agent or skill should have one clear focus
+- **Trigger Conditions** (agents): Include specific examples in the description to help Claude know when to use it
+- **Structured Workflows** (skills): Break complex tasks into numbered steps with clear inputs and outputs
+- **Quality Over Quantity**: One excellent contribution beats several mediocre ones
+- **Test Thoroughly**: Try on real problems before submitting
 
 ## 📄 License
 
